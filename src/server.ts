@@ -14,7 +14,7 @@ app.listen(port, async() => {
     console.log(`server running at http://localhost:4000`)
 
     AppDataSource.initialize().then(() => {
-        console.log('dtabase initialized')
+        console.log('database initialized')
     }).catch(err => console.log(err))
 
 })
