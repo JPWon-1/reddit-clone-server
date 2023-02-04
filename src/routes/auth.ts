@@ -1,10 +1,13 @@
 import { Request, Response, Router } from "express";
 import { User } from "../entities/User/User";
-import { validate } from "class-validator";
+import { isEmpty, validate } from "class-validator";
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import cookie from 'cookie';
 
 const mapErrors = (errors: Object[]) => {
     return errors.reduce((prev: any, err: any) => {
-        prev[err.property] = Object.entries(err.constraint[0][1])
+        prev[err.property] = Object.entries(err.constraints)[0][1]
         return prev;
     }, {})
 }
@@ -35,6 +38,7 @@ const register = async (req: Request, res: Response) => {
 
         // 엔티티에 정해 놓은 조건으로 user 데이터의 유효성 검사를 해줌.
         errors = await validate(user);
+        console.log(errors)
 
         if (errors.length > 0) return res.status(400).json(mapErrors(errors));
 
@@ -48,7 +52,48 @@ const register = async (req: Request, res: Response) => {
     }
 }
 
+const login = async (req: Request, res: Response) => {
+    const { username, password } = req.body;
+    try {
+        let errors: any = {};
+        //비워져있다면 에러를 프론트엔드로 보내주기
+        if (isEmpty(username)) errors.username = "사용자 이름은 필수입니다."
+        if (isEmpty(password)) errors.username = "비밀번호를 입력해주세요."
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json(errors);
+        }
+
+        // 디비에서 유저 찾기
+        const user = await User.findOneBy({ username });
+
+        console.log(user)
+
+        // 유저가 없다면 에러 보내기
+        if (!user) return res.status(404).json({ username: "사용자 이름이 등록되지 않았습니다." });
+
+        // 유저가 있다면 비밀번호 비교하기
+        const passwordMatches = await bcrypt.compare(password, user.password);
+
+        // 비밀번호가 다르다면 에러 보내기
+        if (!passwordMatches) {
+            return res.status(401).json({ password: "비밀번호가 잘못되었습니다." })
+        }
+
+        // 비밀번호가 맞다면 토큰 생성
+        console.log(process.env.JWT_SECRET)
+        const token = jwt.sign({ username }, process.env.JWT_SECRET!);
+
+        // 쿠키 저장
+        // var setCookie = cookie.serialize('foo','bar');
+        res.set("Set-Cookie", cookie.serialize("token", token));
+        return res.json({ user, token })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json(error);
+    }
+}
+
 const router = Router();
 router.post("/register", register);
-
+router.post("/login", login)
 export default router;
