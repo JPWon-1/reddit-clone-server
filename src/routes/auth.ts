@@ -1,6 +1,8 @@
 import { Request, Response, Router } from "express";
 import { User } from "../entities/User/User";
 import { isEmpty, validate } from "class-validator";
+import userMiddleware from "../middleware/user"
+import authMiddleware from "../middleware/auth"
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import cookie from 'cookie';
@@ -10,6 +12,10 @@ const mapErrors = (errors: Object[]) => {
         prev[err.property] = Object.entries(err.constraints)[0][1]
         return prev;
     }, {})
+}
+
+const me = async (req: Request, res: Response) => {
+    return res.json(res.locals.user);
 }
 
 const register = async (req: Request, res: Response) => {
@@ -66,7 +72,6 @@ const login = async (req: Request, res: Response) => {
         // 디비에서 유저 찾기
         const user = await User.findOneBy({ username });
 
-        console.log(user)
 
         // 유저가 없다면 에러 보내기
         if (!user) return res.status(404).json({ username: "사용자 이름이 등록되지 않았습니다." });
@@ -80,7 +85,6 @@ const login = async (req: Request, res: Response) => {
         }
 
         // 비밀번호가 맞다면 토큰 생성
-        console.log(process.env.JWT_SECRET)
         const token = jwt.sign({ username }, process.env.JWT_SECRET!);
 
         // 쿠키 저장
@@ -99,6 +103,7 @@ const login = async (req: Request, res: Response) => {
 }
 
 const router = Router();
+router.get("/me", userMiddleware, authMiddleware, me)
 router.post("/register", register);
 router.post("/login", login)
 export default router;
