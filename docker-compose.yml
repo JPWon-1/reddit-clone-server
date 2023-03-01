@@ -7,7 +7,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: "${DB_USER_ID}"
-      POSTGRES_PASSWORD: "${DB_USER_PASSWORD}"
+      POSTGRES_USER: "${REACT_APP_DB_USER_ID}"
+      POSTGRES_PASSWORD: "${REACT_APP_DB_USER_PASSWORD}"
     volumes:
       - ./data:/var/lib/postgresql/data
