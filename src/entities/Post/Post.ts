@@ -3,7 +3,8 @@ import BaseEntity from "../Entity";
 import { User } from "../User/User";
 import { Exclude, Expose } from "class-transformer";
 import Sub from "../Sub/Sub";
-import { makeId, slugify } from "../../utils/helpers";
+import { makeId } from "../../utils/helpers";
+import {slugify} from "transliteration";
 import Vote from "../Vote/Vote";
 import Comment from "../Comment/Comment";
 

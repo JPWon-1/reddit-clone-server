@@ -26,6 +26,7 @@
       "nodemon": "^2.0.20",
       "pg": "^8.4.0",
       "reflect-metadata": "^0.1.13",
+      "transliteration": "^2.3.5",
       "typeorm": "0.3.11"
    },
    "devDependencies": {
