@@ -5,6 +5,29 @@ import Sub from "../entities/Sub/Sub";
 import Post from "../entities/Post/Post";
 import Comment from "../entities/Comment/Comment";
 
+const getPosts = async (req: Request, res: Response) => {
+    const currentPage: number = (req.query.page || 0) as number;
+    const perPage: number = (req.query.count || 3) as number;
+
+    try {
+        const posts = await Post.find({
+            order: { createdAt: "DESC" },
+            relations: ["sub", "votes", "comments"],
+            skip: currentPage * perPage,
+            take: perPage
+        })
+
+        if (res.locals.user) {
+            posts.forEach(p => p.setUserVote(res.locals.user));
+        }
+
+        return res.json(posts);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "문제가 발생했습니다." });
+    }
+}
+
 const getPost = async (req: Request, res: Response) => {
     const { identifier, slug } = req.params;
     try {
@@ -92,6 +115,9 @@ const createPostComment = async (req: Request, res: Response) => {
 const router = Router();
 router.get("/:identifier/:slug", userMiddleware, getPost)
 router.post("/", userMiddleware, authMiddleware, createPost);
+
+router.get("/", userMiddleware, getPosts);
+
 router.get("/:identifier/:slug/comments", userMiddleware, getPostComments);
 router.post("/:identifier/:slug/comments", userMiddleware, createPostComment);
 export default router;
